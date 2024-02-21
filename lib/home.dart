@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 const sxs = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+const dzs = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+const tgs = ['甲', '乙', '丙', '丁', '戊', '已', '庚', '辛', '壬', '癸'];
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -76,14 +78,25 @@ class BottomBar extends StatefulWidget {
 
 class _BottomBarState extends State<BottomBar> {
   int selectedYear = 1949;
+  var shengXiao = '';
   final now = DateTime.now().year;
 
   String queryShengXiao(int year) {
-    int idx = (year - 1949) % sxs.length;
-    return sxs[idx];
+    int idx = (year - 4) % sxs.length;
+    int i = (year - 4) % tgs.length;
+    return "${tgs[i]}${dzs[idx]}${sxs[idx]}";
   }
 
-  void _showDialog(Widget child) {
+  void _showDialog(int sy) {
+    int year = 1949;
+    List<int> years = [];
+    List<Widget> children = [];
+    while (year <= now) {
+      years.add(year);
+      children.add(Text('$year'));
+      year++;
+    }
+
     showCupertinoModalPopup<void>(
       context: context,
       builder: (BuildContext context) => Container(
@@ -99,7 +112,18 @@ class _BottomBarState extends State<BottomBar> {
         // Use a SafeArea widget to avoid system overlaps.
         child: SafeArea(
           top: false,
-          child: child,
+          child: CupertinoPicker(
+            itemExtent: 44,
+            scrollController: FixedExtentScrollController(
+              initialItem: sy - 1949,
+            ),
+            onSelectedItemChanged: (idx) {
+              setState(() {
+                selectedYear = years[idx];
+              });
+            },
+            children: children,
+          ),
         ),
       ),
     );
@@ -107,39 +131,31 @@ class _BottomBarState extends State<BottomBar> {
 
   @override
   Widget build(BuildContext context) {
-    int year = 1949;
-
-    List<int> years = [];
-    List<Widget> children = [];
-    while (year <= now) {
-      years.add(year);
-      children.add(Text('$year'));
-      year++;
-    }
-
     return SafeArea(
       child: SizedBox(
         height: 44,
         child: Row(
           children: [
             const SizedBox(width: 15),
-            const Text('出生年份：'),
+            const Text('年份：'),
             TextButton(
-              onPressed: () => _showDialog(
-                CupertinoPicker(
-                  itemExtent: 44,
-                  onSelectedItemChanged: (idx) {
-                    setState(() {
-                      selectedYear = years[idx];
-                    });
-                  },
-                  children: children,
-                ),
-              ),
+              onPressed: () {
+                shengXiao = '';
+                _showDialog(selectedYear);
+              },
               child: Text('$selectedYear'),
             ),
-            TextButton(onPressed: () {}, child: const Text('查询')),
-            Text(queryShengXiao(selectedYear)),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  shengXiao = queryShengXiao(selectedYear);
+                });
+              },
+              child: const Text('查询'),
+            ),
+            const Spacer(),
+            Text(shengXiao),
+            const SizedBox(width: 15),
           ],
         ),
       ),
